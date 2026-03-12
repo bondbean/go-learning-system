@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>围棋学习激励系统</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#f59e0b',
+            success: '#10b981',
+            danger: '#ef4444',
+            dark: '#1e293b',
+            light: '#f8fafc'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-slow': 'pulse 3s infinite',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .text-shadow-lg {
+        text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+      }
+      .transition-all-300 {
+        transition: all 300ms ease-in-out;
+      }
+      .scale-hover:hover {
+        transform: scale(1.05);
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- 登录模态框 -->
+  <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+      <div class="text-center mb-6">
+        <h2 class="text-3xl font-bold text-dark text-shadow-lg">谁是元帅</h2>
+        <p class="text-gray-600 mt-2">通过完成围棋任务升级你的军队和军衔！</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-1">用户名：</label>
+          <input type="text" id="username" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="请输入用户名">
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">密码：</label>
+          <input type="password" id="password" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="请输入密码">
+        </div>
+        <div id="login-error" class="hidden text-danger text-sm"></div>
+        <button id="login-btn" class="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 transition-all-300">
+          登录
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主内容区域 -->
+  <div id="main-content" class="hidden">
+    <div class="container mx-auto px-4 py-8">
+      <!-- 顶部标题 -->
+      <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-dark text-shadow-lg">谁是元帅</h1>
+        <p class="text-gray-600 mt-2">通过完成围棋任务升级你的军队和军衔！</p>
+      </header>
+
+    <!-- 主要内容区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧：小组和学生管理 -->
+      <div class="lg:col-span-1">
+        <!-- 小组管理 -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-dark">小组管理</h2>
+            <button id="add-group-btn" class="bg-primary text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-all-300">
+              <i class="fa fa-plus mr-1"></i> 添加小组
+            </button>
+          </div>
+          
+          <div class="mb-4">
+            <label for="group-select" class="block text-sm font-medium text-gray-700 mb-1">选择小组：</label>
+            <select id="group-select" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+              <!-- 小组选项将通过JS动态添加 -->
+            </select>
+          </div>
+          
+          <div id="groups-list" class="space-y-2">
+            <!-- 小组列表将通过JS动态添加 -->
+          </div>
+        </div>
+        
+        <!-- 学生管理 -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-dark">学生管理</h2>
+            <button id="add-student-btn" class="bg-primary text-white px-3 py-1 rounded-md hover:bg-blue-600 transition-all-300">
+              <i class="fa fa-plus mr-1"></i> 添加学生
+            </button>
+          </div>
+          
+          <div id="students-list" class="space-y-2 max-h-96 overflow-y-auto">
+            <!-- 学生列表将通过JS动态添加 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧：学生详情和军队展示 -->
+      <div class="lg:col-span-2">
+        <div id="student-details" class="bg-white rounded-lg shadow-md p-6">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-dark">请选择一个学生</h2>
+            <p class="text-gray-500">查看详细信息和军队状态</p>
+          </div>
+          
+          <!-- 学生信息卡片 -->
+          <div id="student-info" class="hidden">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+              <!-- 军队展示 -->
+              <div class="flex-shrink-0 w-full md:w-1/2 flex justify-center">
+                <div id="army-display" class="relative">
+                  <div id="army-image-container" class="flex justify-center py-6 min-h-[300px]">
+                    <!-- 军队图像将通过JS动态添加 -->
+                  </div>
+                  <div class="text-center mt-4">
+                    <div class="text-2xl font-bold" id="student-level">等级 1</div>
+                    <div class="text-lg font-semibold text-primary" id="student-rank">列兵</div>
+                    <div class="text-gray-600" id="student-army-count">军队数量: 1</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 学生信息 -->
+              <div class="w-full md:w-1/2">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="text-xl font-bold mb-3" id="student-name">学生姓名</h3>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-sm text-gray-500">所属小组</p>
+                      <p class="font-medium" id="student-group">未分组</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-500">当前等级</p>
+                      <p class="font-medium" id="student-level-display">1</p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-gray-500">任务进度</p>
+                      <p class="font-medium" id="student-progress">0/4</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 编辑按钮 -->
+                  <div class="mt-4 flex justify-end">
+                    <button id="edit-student-btn" class="bg-secondary text-white px-3 py-1 rounded-md hover:bg-yellow-600 transition-all-300">
+                      <i class="fa fa-pencil mr-1"></i> 编辑信息
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 标签页导航 -->
+            <div class="border-b border-gray-200 mb-6">
+              <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="student-tabs" role="tablist">
+                <li class="mr-2" role="presentation">
+                  <button class="inline-block p-4 border-b-2 border-primary text-primary rounded-t-lg active" id="tasks-tab" data-tab="tasks" type="button" role="tab" aria-selected="true">任务管理</button>
+                </li>
+                <li class="mr-2" role="presentation">
+                  <button class="inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg" id="history-tab" data-tab="history" type="button" role="tab" aria-selected="false">历史记录</button>
+                </li>
+              </ul>
+            </div>
+            
+            <!-- 任务管理标签页 -->
+            <div id="tasks-tab-content" class="tab-content active">
+              <h3 class="text-xl font-bold mb-4">任务管理</h3>
+              
+              <!-- 任务设置 -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h4 class="font-medium mb-2">任务要求设置</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label for="chess-tasks" class="block text-sm text-gray-600 mb-1">下棋任务（局数）：</label>
+                    <div class="flex">
+                      <input type="number" id="chess-tasks" class="w-full border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" min="1">
+                      <button id="save-chess-tasks" class="bg-primary text-white px-3 py-2 rounded-r-md hover:bg-blue-600 transition-all-300">
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="problem-tasks" class="block text-sm text-gray-600 mb-1">做题任务（题数）：</label>
+                    <div class="flex">
+                      <input type="number" id="problem-tasks" class="w-full border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" min="1">
+                      <button id="save-problem-tasks" class="bg-primary text-white px-3 py-2 rounded-r-md hover:bg-blue-600 transition-all-300">
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 当前任务进度 -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h4 class="font-medium mb-2">当前任务进度</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div class="flex justify-between text-sm mb-1">
+                      <span>下棋任务</span>
+                      <span id="chess-progress">0/5</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div id="chess-progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                      <button id="toggle-chess-task" class="text-sm bg-success text-white px-2 py-1 rounded hover:bg-green-600 transition-all-300">
+                        <i class="fa fa-check mr-1"></i> 完成
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-sm mb-1">
+                      <span>做题任务</span>
+                      <span id="problem-progress">0/10</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div id="problem-progress-bar" class="bg-secondary h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                      <button id="toggle-problem-task" class="text-sm bg-success text-white px-2 py-1 rounded hover:bg-green-600 transition-all-300">
+                        <i class="fa fa-check mr-1"></i> 完成
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 等级进度 -->
+              <div class="mb-4">
+                <h4 class="font-medium mb-2">等级进度</h4>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                  <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                  <span>当前等级任务</span>
+                  <span id="level-progress-text">0/4</span>
+                </div>
+              </div>
+              
+              <!-- 完成任务按钮 -->
+              <div class="text-center">
+                <button id="complete-task-btn" class="bg-success text-white px-6 py-2 rounded-md hover:bg-green-600 transition-all-300 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                  <i class="fa fa-check-circle mr-2"></i> 完成当前任务
+                </button>
+              </div>
+            </div>
+            
+            <!-- 历史记录标签页 -->
+            <div id="history-tab-content" class="tab-content hidden">
+              <h3 class="text-xl font-bold mb-4">历史记录</h3>
+              
+              <!-- 历史记录筛选 -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-2">
+                  <button class="history-filter px-3 py-1 rounded-full bg-primary text-white" data-filter="all">全部</button>
+                  <button class="history-filter px-3 py-1 rounded-full bg-gray-200 text-gray-700" data-filter="chess">下棋</button>
+                  <button class="history-filter px-3 py-1 rounded-full bg-gray-200 text-gray-700" data-filter="problem">做题</button>
+                  <button class="history-filter px-3 py-1 rounded-full bg-gray-200 text-gray-700" data-filter="taskComplete">任务完成</button>
+                  <button class="history-filter px-3 py-1 rounded-full bg-gray-200 text-gray-700" data-filter="levelUp">升级</button>
+                </div>
+              </div>
+              
+              <!-- 历史记录列表 -->
+              <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- 历史记录将通过JS动态添加 -->
+                <div class="text-center text-gray-500 py-8">暂无历史记录</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  
+  <!-- 添加/编辑小组模态框 -->
+  <div id="group-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4" id="group-modal-title">添加小组</h3>
+      <input type="hidden" id="group-id">
+      <div class="mb-4">
+        <label for="group-name" class="block text-sm font-medium text-gray-700 mb-1">小组名称：</label>
+        <input type="text" id="group-name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button id="cancel-group-modal" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-all-300">取消</button>
+        <button id="save-group" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600 transition-all-300">保存</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 添加/编辑学生模态框 -->
+  <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4" id="student-modal-title">添加学生</h3>
+      <input type="hidden" id="student-id">
+      <div class="mb-4">
+        <label for="student-name-input" class="block text-sm font-medium text-gray-700 mb-1">学生姓名：</label>
+        <input type="text" id="student-name-input" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required>
+      </div>
+      <div class="mb-4">
+        <label for="student-group-select" class="block text-sm font-medium text-gray-700 mb-1">所属小组：</label>
+        <select id="student-group-select" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+          <!-- 小组选项将通过JS动态添加 -->
+        </select>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button id="cancel-student-modal" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-all-300">取消</button>
+        <button id="save-student" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600 transition-all-300">保存</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 升级庆祝模态框 -->
+  <div id="level-up-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md text-center">
+      <div class="text-6xl text-yellow-500 mb-4">
+        <i class="fa fa-trophy animate-bounce-slow"></i>
+      </div>
+      <h3 class="text-2xl font-bold mb-2">恭喜升级！</h3>
+      <p class="text-lg mb-4" id="level-up-message">你已升级到 <span id="new-level">2</span> 级！军衔：<span id="new-rank">上等兵</span></p>
+      <div class="mb-6">
+        <img id="new-level-image" src="" alt="新等级军队" class="w-32 h-32 mx-auto">
+      </div>
+      <button id="close-level-up-modal" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-blue-600 transition-all-300">
+        太棒了！
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // 登录功能
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginBtn = document.getElementById('login-btn');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const loginError = document.getElementById('login-error');
+      const loginModal = document.getElementById('login-modal');
+      const mainContent = document.getElementById('main-content');
+      
+      // 登录按钮点击事件
+      loginBtn.addEventListener('click', function() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        // 验证用户名和密码
+        if (username === 'nlxq' && password === '6688') {
+          // 登录成功
+          loginModal.classList.add('hidden');
+          mainContent.classList.remove('hidden');
+        } else {
+          // 登录失败
+          loginError.textContent = '用户名或密码错误，请重新输入';
+          loginError.classList.remove('hidden');
+        }
+      });
+      
+      // 回车键登录
+      usernameInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          passwordInput.focus();
+        }
+      });
+      
+      passwordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          loginBtn.click();
+        }
+      });
+    });
+    
+    // 军队等级图像映射
+    const armyImages = {
+      1: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/2ed420a1ad6540d0a7a5fe3d28526809~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311201540A708AC0CFCC941E6A488&rrcfp=f06b921b&x-expires=1775823415&x-signature=Puig4DPBsbJdbHZKxxMjQO62yz0%3D",
+      2: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/0951573d0b434b5d800a5b59a54a9578~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820352&x-signature=AocDIlTlxjAbKMog7LMbs4K1cpI%3D",
+      3: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/6d37674ccd6a4b3b8f64496aa48afef5~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820348&x-signature=QB05NqKUyLKu20putHyHVcJl90U%3D",
+      4: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c54444e0520f4953a5a7338d080ba3bd~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820348&x-signature=HkJWaCB924%2BZl2%2BAAmtW30iKFDg%3D",
+      5: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/2136ba8f743f4df3a6fb144cddbdefee~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820349&x-signature=OA%2FbQ8C%2BhioTkKvg7wpoPVbkWto%3D",
+      6: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/837bc2d48474488f929bacb972dce692~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820350&x-signature=1toUUS7fq4NkQEoXF45a2B5uTEw%3D",
+      7: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/cf7b775414fa4a09b8d4409d636068bb~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820371&x-signature=xveQIdyrLZMzQSiqDeP%2BNB24Z1M%3D",
+      8: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f38dbbfbade2497790d6f5a3e03becd0~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820372&x-signature=MLrT1Kwp%2F9qNuW02gyzI%2BX7H2hs%3D",
+      9: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/1d5cc602c53743f8a72f588d2f0162af~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820371&x-signature=Q%2B%2BPhzfnAfiygD2LDKZcPVZwNKo%3D",
+      10: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/9aa3c0e683624b148957b128d3407e0c~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820373&x-signature=fFbmPYD05U7%2BtVmTXVLpe9f349A%3D",
+      11: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/6ef35a050adb4c2b87cafbcad347c55b~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311224800C5B03845D72D5829BB89&rrcfp=f06b921b&x-expires=1775832493&x-signature=a7H%2BXtc2gl2SlACNvYhwb7pwUWo%3D", // 拿破仑战争时期滑膛枪士兵
+      12: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f55cc19db40445f59d1df64374e67f43~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311201540A708AC0CFCC941E6A488&rrcfp=f06b921b&x-expires=1775823481&x-signature=zAW1dseg7uusNgpCY%2F4%2BNvqiN5Q%3D",
+      13: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/5538a050376a4198bf4730736550421b~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820400&x-signature=GCbNlXmec0IDxGGHUAx07cmGMsk%3D",
+      14: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/5c6dbb3d3af74a228ffe1074bd1ff97c~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311201540A708AC0CFCC941E6A488&rrcfp=f06b921b&x-expires=1775823523&x-signature=abwclu8LfXNpRO1iJQt%2BFnK86Cw%3D",
+      15: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/532b452c9380414baf3914267eaa3b8d~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603111925109CA38716F308CD30CE67&rrcfp=f06b921b&x-expires=1775820399&x-signature=ywVMTVYctpbq%2FSFQmRb7bL4LyHo%3D",
+      16: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/491582660daf43d3912a376f88b2d54e~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311201540A708AC0CFCC941E6A488&rrcfp=f06b921b&x-expires=1775823553&x-signature=88VQfD1CCzKH6uhAtOP8Xa42uDQ%3D",
+      17: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/995a8426c7fd4bf790de6e93097915a9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311225712ADD5B9CA08100633EA2B&rrcfp=f06b921b&x-expires=1775833076&x-signature=w1bPgSnMitXGzm8PpqOZgrEqCmw%3D", // 特种兵无人机飞手
+      18: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/995a8426c7fd4bf790de6e93097915a9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311225712ADD5B9CA08100633EA2B&rrcfp=f06b921b&x-expires=1775833076&x-signature=w1bPgSnMitXGzm8PpqOZgrEqCmw%3D", // 特种兵无人机飞手
+      19: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/995a8426c7fd4bf790de6e93097915a9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311225712ADD5B9CA08100633EA2B&rrcfp=f06b921b&x-expires=1775833076&x-signature=w1bPgSnMitXGzm8PpqOZgrEqCmw%3D", // 特种兵无人机飞手
+      20: "https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/a8a07daf186c48c8a79e6ef0732abf3b~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311201540A708AC0CFCC941E6A488&rrcfp=f06b921b&x-expires=1775823648&x-signature=Kfv77hTNFCRF13sWx2S1QSiZBHI%3D"
+    };
+
+    // 军衔系统映射
+    const ranks = {
+      1: "列兵",
+      2: "上等兵",
+      3: "下士",
+      4: "中士",
+      5: "上士",
+      6: "准尉",
+      7: "少尉",
+      8: "中尉",
+      9: "大尉",
+      10: "少校",
+      11: "中校",
+      12: "上校",
+      13: "大校",
+      14: "少将",
+      15: "中将",
+      16: "上将",
+      17: "大将",
+      18: "元帅",
+      19: "大元帅",
+      20: "恭喜你可以称帝了！"
+    };
+    
+    // 获取军衔（21级以后全部为老师）
+    function getRank(level) {
+      if (level >= 21) {
+        return "老师";
+      }
+      return ranks[level] || ranks[1];
+    }
+
+    // 数据管理
+    class DataManager {
+      constructor() {
+        this.groups = this.loadGroups();
+        this.students = this.loadStudents();
+        this.currentGroupId = null;
+        this.currentStudentId = null;
+      }
+      
+      // 从localStorage加载小组数据
+      loadGroups() {
+        const savedGroups = localStorage.getItem('goLearningGroups');
+        return savedGroups ? JSON.parse(savedGroups) : [{ id: 'default', name: '默认小组' }];
+      }
+      
+      // 从localStorage加载学生数据
+      loadStudents() {
+        const savedStudents = localStorage.getItem('goLearningStudents');
+        return savedStudents ? JSON.parse(savedStudents) : [];
+      }
+      
+      // 保存小组数据到localStorage
+      saveGroups() {
+        localStorage.setItem('goLearningGroups', JSON.stringify(this.groups));
+      }
+      
+      // 保存学生数据到localStorage
+      saveStudents() {
+        localStorage.setItem('goLearningStudents', JSON.stringify(this.students));
+      }
+      
+      // 添加小组
+      addGroup(name) {
+        const id = Date.now().toString();
+        this.groups.push({ id, name });
+        this.saveGroups();
+        return id;
+      }
+      
+      // 更新小组
+      updateGroup(id, name) {
+        const groupIndex = this.groups.findIndex(g => g.id === id);
+        if (groupIndex !== -1) {
+          this.groups[groupIndex].name = name;
+          this.saveGroups();
+          return true;
+        }
+        return false;
+      }
+      
+      // 删除小组
+      deleteGroup(id) {
+        // 不能删除默认小组
+        if (id === 'default') return false;
+        
+        // 将该小组的学生移至默认小组
+        this.students.forEach(student => {
+          if (student.groupId === id) {
+            student.groupId = 'default';
+          }
+        });
+        
+        // 删除小组
+        this.groups = this.groups.filter(g => g.id !== id);
+        this.saveGroups();
+        this.saveStudents();
+        
+        // 如果当前选中的是被删除的小组，切换到默认小组
+        if (this.currentGroupId === id) {
+          this.currentGroupId = 'default';
+        }
+        
+        return true;
+      }
+      
+      // 添加学生
+      addStudent(name, groupId) {
+        const id = Date.now().toString();
+        const student = {
+          id,
+          name,
+          groupId,
+          level: 1,
+          taskProgress: 0,
+          armyCount: 1,
+          legionCount: 1,
+          chessTasks: {
+            required: 5,
+            completed: 0
+          },
+          problemTasks: {
+            required: 10,
+            completed: 0
+          },
+          history: []
+        };
+        this.students.push(student);
+        this.saveStudents();
+        return id;
+      }
+      
+      // 更新学生
+      updateStudent(id, data) {
+        const studentIndex = this.students.findIndex(s => s.id === id);
+        if (studentIndex !== -1) {
+          this.students[studentIndex] = { ...this.students[studentIndex], ...data };
+          this.saveStudents();
+          return true;
+        }
+        return false;
+      }
+      
+      // 删除学生
+      deleteStudent(id) {
+        this.students = this.students.filter(s => s.id !== id);
+        this.saveStudents();
+        
+        // 如果当前选中的是被删除的学生，清除选择
+        if (this.currentStudentId === id) {
+          this.currentStudentId = null;
+        }
+        
+        return true;
+      }
+      
+      // 获取指定小组的学生
+      getStudentsByGroup(groupId) {
+        return this.students.filter(student => student.groupId === groupId);
+      }
+      
+      // 获取指定学生
+      getStudent(id) {
+        return this.students.find(student => student.id === id);
+      }
+      
+      // 获取学生历史记录
+      getStudentHistory(studentId) {
+        const student = this.getStudent(studentId);
+        return student ? student.history : [];
+      }
+      
+      // 获取指定小组
+      getGroup(id) {
+        return this.groups.find(group => group.id === id);
+      }
+      
+      // 设置当前选中的小组
+      setCurrentGroup(id) {
+        this.currentGroupId = id;
+      }
+      
+      // 设置当前选中的学生
+      setCurrentStudent(id) {
+        this.currentStudentId = id;
+      }
+      
+      // 切换下棋任务完成状态
+      toggleChessTask(studentId) {
+        const student = this.getStudent(studentId);
+        if (student) {
+          const wasCompleted = student.chessTasks.completed >= student.chessTasks.required;
+          if (wasCompleted) {
+            // 如果已完成，则重置为0
+            student.chessTasks.completed = 0;
+          } else {
+            // 如果未完成，则设置为要求数量
+            student.chessTasks.completed = student.chessTasks.required;
+          }
+          // 记录历史
+          student.history.push({
+            type: 'chess',
+            count: wasCompleted ? -student.chessTasks.required : student.chessTasks.required,
+            timestamp: new Date().toISOString(),
+            level: student.level
+          });
+          this.saveStudents();
+          return !wasCompleted; // 返回新的状态
+        }
+        return false;
+      }
+      
+      // 切换做题任务完成状态
+      toggleProblemTask(studentId) {
+        const student = this.getStudent(studentId);
+        if (student) {
+          const wasCompleted = student.problemTasks.completed >= student.problemTasks.required;
+          if (wasCompleted) {
+            // 如果已完成，则重置为0
+            student.problemTasks.completed = 0;
+          } else {
+            // 如果未完成，则设置为要求数量
+            student.problemTasks.completed = student.problemTasks.required;
+          }
+          // 记录历史
+          student.history.push({
+            type: 'problem',
+            count: wasCompleted ? -student.problemTasks.required : student.problemTasks.required,
+            timestamp: new Date().toISOString(),
+            level: student.level
+          });
+          this.saveStudents();
+          return !wasCompleted; // 返回新的状态
+        }
+        return false;
+      }
+      
+      // 设置下棋任务要求
+      setChessTasksRequired(studentId, required) {
+        const student = this.getStudent(studentId);
+        if (student) {
+          student.chessTasks.required = required;
+          this.saveStudents();
+          return true;
+        }
+        return false;
+      }
+      
+      // 设置做题任务要求
+      setProblemTasksRequired(studentId, required) {
+        const student = this.getStudent(studentId);
+        if (student) {
+          student.problemTasks.required = required;
+          this.saveStudents();
+          return true;
+        }
+        return false;
+      }
+      
+      // 完成当前任务
+      completeTask(studentId) {
+        const student = this.getStudent(studentId);
+        if (student) {
+          // 检查任务是否完成
+          if (student.chessTasks.completed >= student.chessTasks.required && 
+              student.problemTasks.completed >= student.problemTasks.required) {
+            
+            // 记录任务完成历史
+            const completedChessTasks = student.chessTasks.completed;
+            const completedProblemTasks = student.problemTasks.completed;
+            
+            // 增加任务进度
+            student.taskProgress += 1;
+            
+            // 重置当前任务完成数
+            student.chessTasks.completed = 0;
+            student.problemTasks.completed = 0;
+            
+            // 检查是否升级
+            if (student.taskProgress >= 4) {
+              student.level += 1;
+              student.taskProgress = 0;
+              
+              // 升级时增加军队数量
+              if (student.level === 20) {
+                // 20级是核弹，每升1级增加一个核弹
+                student.legionCount = (student.legionCount || 0) + 1;
+              } else if (student.level >= 17 && student.level <= 19) {
+                // 17-19级是无人机飞手，每完成1次任务增加1台无人机
+                student.armyCount = (student.armyCount || 0) + 1;
+              } else {
+                // 其他等级升级时重置军队数量
+                student.armyCount = 1;
+              }
+              
+              // 记录升级历史
+              student.history.push({
+                type: 'levelUp',
+                chessTasks: completedChessTasks,
+                problemTasks: completedProblemTasks,
+                timestamp: new Date().toISOString(),
+                oldLevel: student.level - 1,
+                newLevel: student.level
+              });
+              
+              this.saveStudents();
+              return { success: true, levelUp: true, newLevel: student.level };
+            } else {
+              
+              // 17-19级是无人机飞手，每完成1次任务增加1台无人机
+              if (student.level >= 17 && student.level <= 19) {
+                student.armyCount = (student.armyCount || 0) + 1;
+              }
+              
+              // 记录任务完成历史
+              student.history.push({
+                type: 'taskComplete',
+                chessTasks: completedChessTasks,
+                problemTasks: completedProblemTasks,
+                timestamp: new Date().toISOString(),
+                level: student.level
+              });
+              
+              this.saveStudents();
+              return { success: true, levelUp: false };
+            }
+          }
+        }
+        return { success: false };
+      }
+    }
+
+    // UI控制器
+    class UIController {
+      constructor(dataManager) {
+        this.dataManager = dataManager;
+        this.initEventListeners();
+        this.renderGroups();
+        this.renderStudents();
+      }
+      
+      // 初始化事件监听器
+      initEventListeners() {
+        // 小组相关事件
+        document.getElementById('add-group-btn').addEventListener('click', () => this.openGroupModal());
+        document.getElementById('save-group').addEventListener('click', () => this.saveGroup());
+        document.getElementById('cancel-group-modal').addEventListener('click', () => this.closeGroupModal());
+        document.getElementById('group-select').addEventListener('change', (e) => this.changeGroup(e.target.value));
+        
+        // 学生相关事件
+        document.getElementById('add-student-btn').addEventListener('click', () => this.openStudentModal());
+        document.getElementById('save-student').addEventListener('click', () => this.saveStudent());
+        document.getElementById('cancel-student-modal').addEventListener('click', () => this.closeStudentModal());
+        document.getElementById('edit-student-btn').addEventListener('click', () => this.editStudent());
+        
+        // 任务相关事件
+        document.getElementById('save-chess-tasks').addEventListener('click', () => this.saveChessTasks());
+        document.getElementById('save-problem-tasks').addEventListener('click', () => this.saveProblemTasks());
+        document.getElementById('toggle-chess-task').addEventListener('click', () => this.toggleChessTask());
+        document.getElementById('toggle-problem-task').addEventListener('click', () => this.toggleProblemTask());
+        document.getElementById('complete-task-btn').addEventListener('click', () => this.completeTask());
+        
+        // 升级庆祝模态框
+        document.getElementById('close-level-up-modal').addEventListener('click', () => this.closeLevelUpModal());
+        
+        // 标签页切换事件
+        document.querySelectorAll('#student-tabs button').forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            const tabId = e.target.getAttribute('data-tab');
+            this.switchTab(tabId);
+          });
+        });
+        
+        // 历史记录筛选事件
+        document.addEventListener('click', (e) => {
+          if (e.target.classList.contains('history-filter')) {
+            const filter = e.target.getAttribute('data-filter');
+            this.filterHistory(filter);
+          }
+        });
+      }
+      
+      // 渲染小组列表
+      renderGroups() {
+        const groupsList = document.getElementById('groups-list');
+        const groupSelect = document.getElementById('group-select');
+        const studentGroupSelect = document.getElementById('student-group-select');
+        
+        // 清空现有列表
+        groupsList.innerHTML = '';
+        groupSelect.innerHTML = '';
+        studentGroupSelect.innerHTML = '';
+        
+        // 添加小组到列表和选择框
+        this.dataManager.groups.forEach(group => {
+          // 添加到小组列表
+          const groupItem = document.createElement('div');
+          groupItem.className = 'flex justify-between items-center p-2 rounded-md hover:bg-gray-100';
+          groupItem.innerHTML = `
+            <span>${group.name}</span>
+            <div>
+              <button class="text-primary hover:text-blue-700 mr-2 edit-group" data-id="${group.id}">
+                <i class="fa fa-pencil"></i>
+              </button>
+              ${group.id !== 'default' ? `<button class="text-danger hover:text-red-700 delete-group" data-id="${group.id}">
+                <i class="fa fa-trash"></i>
+              </button>` : ''}
+            </div>
+          `;
+          groupsList.appendChild(groupItem);
+          
+          // 添加到小组选择框
+          const option = document.createElement('option');
+          option.value = group.id;
+          option.textContent = group.name;
+          groupSelect.appendChild(option.cloneNode(true));
+          studentGroupSelect.appendChild(option);
+          
+          // 添加编辑和删除事件
+          if (group.id !== 'default') {
+            const editBtn = groupItem.querySelector('.edit-group');
+            const deleteBtn = groupItem.querySelector('.delete-group');
+            
+            editBtn.addEventListener('click', () => this.editGroup(group.id));
+            deleteBtn.addEventListener('click', () => this.deleteGroup(group.id));
+          }
+        });
+        
+        // 设置默认选中的小组
+        if (this.dataManager.currentGroupId) {
+          groupSelect.value = this.dataManager.currentGroupId;
+        } else if (this.dataManager.groups.length > 0) {
+          this.dataManager.setCurrentGroup(this.dataManager.groups[0].id);
+          groupSelect.value = this.dataManager.currentGroupId;
+        }
+        
+        // 触发小组切换事件
+        this.changeGroup(groupSelect.value);
+      }
+      
+      // 渲染学生列表
+      renderStudents() {
+        const studentsList = document.getElementById('students-list');
+        studentsList.innerHTML = '';
+        
+        // 获取当前小组的学生
+        const students = this.dataManager.getStudentsByGroup(this.dataManager.currentGroupId);
+        
+        if (students.length === 0) {
+          studentsList.innerHTML = '<p class="text-gray-500 text-center py-4">当前小组暂无学生</p>';
+          return;
+        }
+        
+        // 添加学生到列表
+        students.forEach(student => {
+          const studentItem = document.createElement('div');
+          studentItem.className = `p-2 rounded-md cursor-pointer transition-all duration-200 ${this.dataManager.currentStudentId === student.id ? 'bg-blue-100 text-primary' : 'hover:bg-gray-100'}`;
+          studentItem.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="font-medium">${student.name}</span>
+              <div class="flex items-center">
+                <span class="text-xs bg-gray-200 px-2 py-1 rounded-full mr-2">Lv.${student.level}</span>
+                <button class="text-danger hover:text-red-700 delete-student" data-id="${student.id}">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            </div>
+  
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>进度: ${student.taskProgress}/4</span>
+              <span>等级: ${student.level}</span>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>下棋: ${student.chessTasks.completed}/${student.chessTasks.required}</span>
+              <span>做题: ${student.problemTasks.completed}/${student.problemTasks.required}</span>
+            </div>
+          `;
+          
+          // 添加点击事件
+          studentItem.addEventListener('click', (e) => {
+            // 如果点击的是删除按钮，不切换学生
+            if (!e.target.closest('.delete-student')) {
+              this.selectStudent(student.id);
+            }
+          });
+          
+          // 添加删除事件
+          const deleteBtn = studentItem.querySelector('.delete-student');
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.deleteStudent(student.id);
+          });
+          
+          studentsList.appendChild(studentItem);
+        });
+      }
+      
+      // 渲染学生详情
+      renderStudentDetails() {
+        const studentInfo = document.getElementById('student-info');
+        const studentDetails = document.getElementById('student-details');
+        
+        // 如果没有选中学生，显示提示信息
+        if (!this.dataManager.currentStudentId) {
+          studentInfo.classList.add('hidden');
+          studentDetails.querySelector('h2').textContent = '请选择一个学生';
+          studentDetails.querySelector('p').textContent = '查看详细信息和军队状态';
+          return;
+        }
+        
+        // 获取当前学生
+        const student = this.dataManager.getStudent(this.dataManager.currentStudentId);
+        if (!student) return;
+        
+        // 显示学生信息
+        studentInfo.classList.remove('hidden');
+        studentDetails.querySelector('h2').textContent = student.name;
+        studentDetails.querySelector('p').textContent = `等级 ${student.level}`;
+        
+        // 更新学生信息
+        document.getElementById('student-name').textContent = student.name;
+        document.getElementById('student-group').textContent = this.dataManager.getGroup(student.groupId).name;
+        document.getElementById('student-level-display').textContent = student.level;
+        document.getElementById('student-rank').textContent = getRank(student.level);
+        document.getElementById('student-progress').textContent = `${student.taskProgress}/4`;
+        
+        // 更新军队图像
+        this.renderArmyDisplay(student);
+        
+        // 更新任务设置
+        document.getElementById('chess-tasks').value = student.chessTasks.required;
+        document.getElementById('problem-tasks').value = student.problemTasks.required;
+        
+        // 更新任务进度
+        this.updateTaskProgress(student);
+        
+        // 更新任务按钮状态
+        this.updateTaskButtonState();
+        
+        // 渲染历史记录
+        this.renderHistory();
+      }
+      
+      // 渲染军队显示
+      renderArmyDisplay(student) {
+        const armyImageContainer = document.getElementById('army-image-container');
+        armyImageContainer.innerHTML = '';
+        
+        // 获取当前等级
+        const level = Math.min(student.level, 20); // 最高等级为20
+        
+        // 计算当前级别的军队数量（根据taskProgress从1到4）
+        const currentLevelArmyCount = student.taskProgress + 1;
+        
+        // 根据等级和任务进度创建军队图像
+        if (level === 11) {
+          // 11级特殊处理：根据任务进度显示1-4个滑膛枪士兵
+          const imageUrl = armyImages[11];
+          
+          // 创建flex容器来排列多个士兵
+          const armyWrapper = document.createElement('div');
+          armyWrapper.className = 'flex justify-center items-center gap-4';
+          
+          // 根据任务进度显示1-4个士兵
+          for (let i = 0; i < currentLevelArmyCount; i++) {
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = `拿破仑战争时期滑膛枪士兵 ${i + 1}`;
+            img.className = 'w-32 h-32 object-contain scale-hover transition-all duration-300';
+            armyWrapper.appendChild(img);
+          }
+          
+          armyImageContainer.appendChild(armyWrapper);
+        } else if (level >= 17 && level <= 19) {
+          // 17-19级是无人机飞手，显示无人机数量
+          const droneCount = student.armyCount || 1;
+          this.renderDroneArmy(armyImageContainer, level, droneCount);
+        } else if (level === 20) {
+          // 20级是核弹，显示核弹数量
+          const nukeCount = student.legionCount || 1;
+          this.renderNukeArmy(armyImageContainer, nukeCount);
+        } else {
+          // 其他等级根据任务进度显示不同数量的军队
+          this.renderProgressiveArmy(armyImageContainer, level, currentLevelArmyCount);
+        }
+        
+        // 更新等级显示
+        document.getElementById('student-level').textContent = `等级 ${student.level}`;
+        
+        // 根据等级显示不同的军队数量描述
+        if (level >= 17 && level <= 19) {
+          document.getElementById('student-army-count').textContent = `无人机数量: ${student.armyCount || 1}`;
+        } else if (level === 20) {
+          document.getElementById('student-army-count').textContent = `核弹数量: ${student.legionCount || 1}`;
+        } else if (level === 14) {
+          document.getElementById('student-army-count').textContent = `坦克数量: ${currentLevelArmyCount}`;
+        } else if (level === 15) {
+          document.getElementById('student-army-count').textContent = `战斗机数量: ${currentLevelArmyCount}`;
+        } else if (level === 16) {
+          document.getElementById('student-army-count').textContent = `军队数量: ${currentLevelArmyCount}`;
+        } else {
+          document.getElementById('student-army-count').textContent = `军队数量: ${currentLevelArmyCount}`;
+        }
+      }
+      
+      // 渲染渐进式军队（根据任务进度显示不同数量）
+      renderProgressiveArmy(container, level, count) {
+        const imageUrl = armyImages[level] || armyImages[1];
+        
+        // 创建flex容器来排列多个军队单位
+        const armyWrapper = document.createElement('div');
+        armyWrapper.className = 'flex justify-center items-center gap-4';
+        
+        // 根据任务进度显示1-4个军队单位
+        for (let i = 0; i < count; i++) {
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = `等级 ${level} 军队单位 ${i + 1}`;
+          img.className = 'w-32 h-32 object-contain scale-hover transition-all duration-300';
+          armyWrapper.appendChild(img);
+        }
+        
+        container.appendChild(armyWrapper);
+      }
+      
+      // 渲染无人机军队
+      renderDroneArmy(container, level, count) {
+        const imageUrl = armyImages[level] || armyImages[17];
+        
+        // 创建flex容器来排列无人机
+        const droneWrapper = document.createElement('div');
+        droneWrapper.className = 'flex flex-col items-center gap-6';
+        
+        // 显示无人机飞手（人）
+        const pilotImg = document.createElement('img');
+        pilotImg.src = imageUrl;
+        pilotImg.alt = `无人机飞手`;
+        pilotImg.className = 'w-40 h-40 object-contain scale-hover transition-all duration-300';
+        droneWrapper.appendChild(pilotImg);
+        
+        // 显示无人机（根据数量）
+        if (count > 0) {
+          const dronesContainer = document.createElement('div');
+          dronesContainer.className = 'flex flex-wrap justify-center gap-4';
+          
+          for (let i = 0; i < count; i++) {
+            const droneImg = document.createElement('img');
+            droneImg.src = 'https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/1518717ce0ba48ed8b5acf4cb04d589a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260311224800C5B03845D72D5829BB89&rrcfp=f06b921b&x-expires=1775832686&x-signature=96cJMjR%2B9pZ%2FWT71m7lte18aKzc%3D';
+            droneImg.alt = `无人机 ${i + 1}`;
+            droneImg.className = 'w-24 h-24 object-contain scale-hover transition-all duration-300 animate-pulse-slow';
+            dronesContainer.appendChild(droneImg);
+          }
+          
+          droneWrapper.appendChild(dronesContainer);
+        }
+        
+        container.appendChild(droneWrapper);
+      }
+      
+      // 渲染核弹军队
+      renderNukeArmy(container, count) {
+        const imageUrl = armyImages[20] || armyImages[1];
+        
+        // 创建flex容器来排列核弹
+        const nukeWrapper = document.createElement('div');
+        nukeWrapper.className = 'flex flex-wrap justify-center items-center gap-4';
+        
+        // 根据数量显示核弹
+        for (let i = 0; i < count; i++) {
+          const nukeImg = document.createElement('img');
+          nukeImg.src = imageUrl;
+          nukeImg.alt = `核弹 ${i + 1}`;
+          nukeImg.className = 'w-32 h-32 object-contain scale-hover transition-all duration-300';
+          nukeWrapper.appendChild(nukeImg);
+        }
+        
+        container.appendChild(nukeWrapper);
+      }
+      
+      // 更新任务进度
+      updateTaskProgress(student) {
+        // 更新下棋任务进度
+        const chessProgress = document.getElementById('chess-progress');
+        const chessProgressBar = document.getElementById('chess-progress-bar');
+        chessProgress.textContent = `${student.chessTasks.completed}/${student.chessTasks.required}`;
+        const chessPercentage = Math.min((student.chessTasks.completed / student.chessTasks.required) * 100, 100);
+        chessProgressBar.style.width = `${chessPercentage}%`;
+        
+        // 更新做题任务进度
+        const problemProgress = document.getElementById('problem-progress');
+        const problemProgressBar = document.getElementById('problem-progress-bar');
+        problemProgress.textContent = `${student.problemTasks.completed}/${student.problemTasks.required}`;
+        const problemPercentage = Math.min((student.problemTasks.completed / student.problemTasks.required) * 100, 100);
+        problemProgressBar.style.width = `${problemPercentage}%`;
+        
+        // 更新等级进度
+        const levelProgressBar = document.getElementById('level-progress-bar');
+        const levelProgressText = document.getElementById('level-progress-text');
+        levelProgressText.textContent = `${student.taskProgress}/4`;
+        const levelPercentage = (student.taskProgress / 4) * 100;
+        levelProgressBar.style.width = `${levelPercentage}%`;
+        
+        // 更新完成任务按钮状态
+        const completeTaskBtn = document.getElementById('complete-task-btn');
+        const canComplete = student.chessTasks.completed >= student.chessTasks.required && 
+                           student.problemTasks.completed >= student.problemTasks.required;
+        completeTaskBtn.disabled = !canComplete;
+      }
+      
+      // 切换小组
+      changeGroup(groupId) {
+        this.dataManager.setCurrentGroup(groupId);
+        this.dataManager.setCurrentStudent(null);
+        this.renderStudents();
+        this.renderStudentDetails();
+      }
+      
+      // 选择学生
+      selectStudent(studentId) {
+        this.dataManager.setCurrentStudent(studentId);
+        this.renderStudents();
+        this.renderStudentDetails();
+      }
+      
+      // 打开小组模态框
+      openGroupModal(groupId = null) {
+        const modal = document.getElementById('group-modal');
+        const title = document.getElementById('group-modal-title');
+        const groupName = document.getElementById('group-name');
+        const groupIdInput = document.getElementById('group-id');
+        
+        if (groupId) {
+          // 编辑模式
+          const group = this.dataManager.getGroup(groupId);
+          title.textContent = '编辑小组';
+          groupName.value = group.name;
+          groupIdInput.value = groupId;
+        } else {
+          // 添加模式
+          title.textContent = '添加小组';
+          groupName.value = '';
+          groupIdInput.value = '';
+        }
+        
+        modal.classList.remove('hidden');
+        groupName.focus();
+      }
+      
+      // 关闭小组模态框
+      closeGroupModal() {
+        document.getElementById('group-modal').classList.add('hidden');
+      }
+      
+      // 保存小组
+      saveGroup() {
+        const groupName = document.getElementById('group-name').value.trim();
+        const groupId = document.getElementById('group-id').value;
+        
+        if (!groupName) {
+          alert('请输入小组名称');
+          return;
+        }
+        
+        if (groupId) {
+          // 更新小组
+          this.dataManager.updateGroup(groupId, groupName);
+        } else {
+          // 添加小组
+          this.dataManager.addGroup(groupName);
+        }
+        
+        this.renderGroups();
+        this.closeGroupModal();
+      }
+      
+      // 编辑小组
+      editGroup(groupId) {
+        this.openGroupModal(groupId);
+      }
+      
+      // 删除小组
+      deleteGroup(groupId) {
+        if (confirm('确定要删除这个小组吗？该小组的学生将被移至默认小组。')) {
+          this.dataManager.deleteGroup(groupId);
+          this.renderGroups();
+          this.renderStudents();
+        }
+      }
+      
+      // 打开学生模态框
+      openStudentModal(studentId = null) {
+        const modal = document.getElementById('student-modal');
+        const title = document.getElementById('student-modal-title');
+        const studentName = document.getElementById('student-name-input');
+        const studentIdInput = document.getElementById('student-id');
+        const studentGroupSelect = document.getElementById('student-group-select');
+        
+        // 设置默认选中的小组
+        if (this.dataManager.currentGroupId) {
+          studentGroupSelect.value = this.dataManager.currentGroupId;
+        }
+        
+        if (studentId) {
+          // 编辑模式
+          const student = this.dataManager.getStudent(studentId);
+          title.textContent = '编辑学生';
+          studentName.value = student.name;
+          studentGroupSelect.value = student.groupId;
+          studentIdInput.value = studentId;
+        } else {
+          // 添加模式
+          title.textContent = '添加学生';
+          studentName.value = '';
+          studentIdInput.value = '';
+        }
+        
+        modal.classList.remove('hidden');
+        studentName.focus();
+      }
+      
+      // 关闭学生模态框
+      closeStudentModal() {
+        document.getElementById('student-modal').classList.add('hidden');
+      }
+      
+      // 保存学生
+      saveStudent() {
+        const studentName = document.getElementById('student-name-input').value.trim();
+        const studentGroupId = document.getElementById('student-group-select').value;
+        const studentId = document.getElementById('student-id').value;
+        
+        if (!studentName) {
+          alert('请输入学生姓名');
+          return;
+        }
+        
+        if (studentId) {
+          // 更新学生
+          this.dataManager.updateStudent(studentId, { name: studentName, groupId: studentGroupId });
+        } else {
+          // 添加学生
+          const newStudentId = this.dataManager.addStudent(studentName, studentGroupId);
+          // 如果是在当前小组添加的学生，自动选中
+          if (studentGroupId === this.dataManager.currentGroupId) {
+            this.dataManager.setCurrentStudent(newStudentId);
+          }
+        }
+        
+        this.renderStudents();
+        this.renderStudentDetails();
+        this.closeStudentModal();
+      }
+      
+      // 编辑学生
+      editStudent() {
+        this.openStudentModal(this.dataManager.currentStudentId);
+      }
+      
+      // 删除学生
+      deleteStudent(studentId) {
+        if (confirm('确定要删除这个学生吗？')) {
+          this.dataManager.deleteStudent(studentId);
+          this.renderStudents();
+          this.renderStudentDetails();
+        }
+      }
+      
+      // 保存下棋任务要求
+      saveChessTasks() {
+        const chessTasks = parseInt(document.getElementById('chess-tasks').value);
+        if (isNaN(chessTasks) || chessTasks < 1) {
+          alert('请输入有效的任务数量');
+          return;
+        }
+        
+        this.dataManager.setChessTasksRequired(this.dataManager.currentStudentId, chessTasks);
+        this.renderStudentDetails();
+      }
+      
+      // 保存做题任务要求
+      saveProblemTasks() {
+        const problemTasks = parseInt(document.getElementById('problem-tasks').value);
+        if (isNaN(problemTasks) || problemTasks < 1) {
+          alert('请输入有效的任务数量');
+          return;
+        }
+        
+        this.dataManager.setProblemTasksRequired(this.dataManager.currentStudentId, problemTasks);
+        this.renderStudentDetails();
+      }
+      
+      // 切换下棋任务完成状态
+      toggleChessTask() {
+        const isCompleted = this.dataManager.toggleChessTask(this.dataManager.currentStudentId);
+        this.renderStudentDetails();
+        this.updateTaskButtonState();
+        
+        // 如果当前在历史记录标签页，刷新历史记录
+        if (document.getElementById('history-tab-content').classList.contains('active')) {
+          this.renderHistory();
+        }
+      }
+      
+      // 切换做题任务完成状态
+      toggleProblemTask() {
+        const isCompleted = this.dataManager.toggleProblemTask(this.dataManager.currentStudentId);
+        this.renderStudentDetails();
+        this.updateTaskButtonState();
+        
+        // 如果当前在历史记录标签页，刷新历史记录
+        if (document.getElementById('history-tab-content').classList.contains('active')) {
+          this.renderHistory();
+        }
+      }
+      
+      // 更新任务按钮状态
+      updateTaskButtonState() {
+        if (!this.dataManager.currentStudentId) return;
+        
+        const student = this.dataManager.getStudent(this.dataManager.currentStudentId);
+        const chessButton = document.getElementById('toggle-chess-task');
+        const problemButton = document.getElementById('toggle-problem-task');
+        
+        // 更新下棋任务按钮
+        if (student.chessTasks.completed >= student.chessTasks.required) {
+          chessButton.innerHTML = '<i class="fa fa-times mr-1"></i> 未完成';
+          chessButton.classList.remove('bg-success', 'hover:bg-green-600');
+          chessButton.classList.add('bg-danger', 'hover:bg-red-600');
+        } else {
+          chessButton.innerHTML = '<i class="fa fa-check mr-1"></i> 完成';
+          chessButton.classList.remove('bg-danger', 'hover:bg-red-600');
+          chessButton.classList.add('bg-success', 'hover:bg-green-600');
+        }
+        
+        // 更新做题任务按钮
+        if (student.problemTasks.completed >= student.problemTasks.required) {
+          problemButton.innerHTML = '<i class="fa fa-times mr-1"></i> 未完成';
+          problemButton.classList.remove('bg-success', 'hover:bg-green-600');
+          problemButton.classList.add('bg-danger', 'hover:bg-red-600');
+        } else {
+          problemButton.innerHTML = '<i class="fa fa-check mr-1"></i> 完成';
+          problemButton.classList.remove('bg-danger', 'hover:bg-red-600');
+          problemButton.classList.add('bg-success', 'hover:bg-green-600');
+        }
+      }
+      
+      // 完成当前任务
+      completeTask() {
+        const result = this.dataManager.completeTask(this.dataManager.currentStudentId);
+        
+        if (result.success) {
+          if (result.levelUp) {
+            // 显示升级庆祝模态框
+            this.showLevelUpModal(result.newLevel);
+          }
+          this.renderStudents();
+          this.renderStudentDetails();
+          
+          // 如果当前在历史记录标签页，刷新历史记录
+          if (document.getElementById('history-tab-content').classList.contains('active')) {
+            this.renderHistory();
+          }
+        }
+      }
+      
+      // 显示升级庆祝模态框
+      showLevelUpModal(newLevel) {
+        const modal = document.getElementById('level-up-modal');
+        const newLevelElement = document.getElementById('new-level');
+        const newRankElement = document.getElementById('new-rank');
+        const newLevelImage = document.getElementById('new-level-image');
+        
+        newLevelElement.textContent = newLevel;
+        
+        // 获取新等级的军衔
+        const rank = getRank(newLevel);
+        newRankElement.textContent = rank;
+        
+        // 获取新等级的军队图像
+        const level = Math.min(newLevel, 20); // 最高等级为20
+        const imageUrl = armyImages[level] || armyImages[1]; // 如果没有对应等级的图像，使用1级图像
+        newLevelImage.src = imageUrl;
+        newLevelImage.alt = `等级 ${level} 军队`;
+        
+        modal.classList.remove('hidden');
+      }
+      
+      // 关闭升级庆祝模态框
+      closeLevelUpModal() {
+        document.getElementById('level-up-modal').classList.add('hidden');
+      }
+      
+      // 切换标签页
+      switchTab(tabId) {
+        // 隐藏所有标签页内容
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.add('hidden');
+          content.classList.remove('active');
+        });
+        
+        // 移除所有标签页按钮的活动状态
+        document.querySelectorAll('#student-tabs button').forEach(tab => {
+          tab.classList.remove('border-primary', 'text-primary');
+          tab.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+          tab.setAttribute('aria-selected', 'false');
+        });
+        
+        // 显示选中的标签页内容
+        const selectedContent = document.getElementById(`${tabId}-tab-content`);
+        if (selectedContent) {
+          selectedContent.classList.remove('hidden');
+          selectedContent.classList.add('active');
+        }
+        
+        // 设置选中的标签页按钮为活动状态
+        const selectedTab = document.getElementById(`${tabId}-tab`);
+        if (selectedTab) {
+          selectedTab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+          selectedTab.classList.add('border-primary', 'text-primary');
+          selectedTab.setAttribute('aria-selected', 'true');
+        }
+        
+        // 如果切换到历史记录标签页，渲染历史记录
+        if (tabId === 'history') {
+          this.renderHistory();
+        }
+      }
+      
+      // 渲染历史记录
+      renderHistory() {
+        const historyList = document.getElementById('history-list');
+        const studentId = this.dataManager.currentStudentId;
+        
+        if (!studentId) {
+          historyList.innerHTML = '<div class="text-center text-gray-500 py-8">请选择一个学生</div>';
+          return;
+        }
+        
+        const history = this.dataManager.getStudentHistory(studentId);
+        
+        if (history.length === 0) {
+          historyList.innerHTML = '<div class="text-center text-gray-500 py-8">暂无历史记录</div>';
+          return;
+        }
+        
+        // 按时间倒序排序
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // 渲染历史记录
+        historyList.innerHTML = '';
+        history.forEach(record => {
+          const historyItem = document.createElement('div');
+          historyItem.className = `p-3 rounded-md border ${this.getHistoryItemClass(record.type)}`;
+          historyItem.setAttribute('data-type', record.type);
+          
+          const date = new Date(record.timestamp);
+          const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          
+          let content = '';
+          switch (record.type) {
+            case 'chess':
+              content = `
+                <div class="flex items-center">
+                  <div class="text-primary mr-3">
+                    <i class="fa fa-chess fa-lg"></i>
+                  </div>
+                  <div>
+                    <div class="font-medium">完成下棋任务</div>
+                    <div class="text-sm text-gray-600">完成局数: ${record.count} | 等级: ${record.level}</div>
+                    <div class="text-xs text-gray-500 mt-1">${formattedDate}</div>
+                  </div>
+                </div>
+              `;
+              break;
+            case 'problem':
+              content = `
+                <div class="flex items-center">
+                  <div class="text-secondary mr-3">
+                    <i class="fa fa-puzzle-piece fa-lg"></i>
+                  </div>
+                  <div>
+                    <div class="font-medium">完成做题任务</div>
+                    <div class="text-sm text-gray-600">完成题数: ${record.count} | 等级: ${record.level}</div>
+                    <div class="text-xs text-gray-500 mt-1">${formattedDate}</div>
+                  </div>
+                </div>
+              `;
+              break;
+            case 'taskComplete':
+              content = `
+                <div class="flex items-center">
+                  <div class="text-success mr-3">
+                    <i class="fa fa-check-circle fa-lg"></i>
+                  </div>
+                  <div>
+                    <div class="font-medium">完成阶段任务</div>
+                    <div class="text-sm text-gray-600">下棋: ${record.chessTasks}局 | 做题: ${record.problemTasks}题 | 等级: ${record.level}</div>
+                    <div class="text-xs text-gray-500 mt-1">${formattedDate}</div>
+                  </div>
+                </div>
+              `;
+              break;
+            case 'levelUp':
+              content = `
+                <div class="flex items-center">
+                  <div class="text-purple-600 mr-3">
+                    <i class="fa fa-arrow-up fa-lg"></i>
+                  </div>
+                  <div>
+                    <div class="font-medium">军队升级</div>
+                    <div class="text-sm text-gray-600">从 ${record.oldLevel} 级升级到 ${record.newLevel} 级</div>
+                    <div class="text-sm text-gray-600">完成下棋: ${record.chessTasks}局 | 做题: ${record.problemTasks}题</div>
+                    <div class="text-xs text-gray-500 mt-1">${formattedDate}</div>
+                  </div>
+                </div>
+              `;
+              break;
+          }
+          
+          historyItem.innerHTML = content;
+          historyList.appendChild(historyItem);
+        });
+      }
+      
+      // 获取历史记录项的样式类
+      getHistoryItemClass(type) {
+        switch (type) {
+          case 'chess':
+            return 'border-blue-200 bg-blue-50';
+          case 'problem':
+            return 'border-yellow-200 bg-yellow-50';
+          case 'taskComplete':
+            return 'border-green-200 bg-green-50';
+          case 'levelUp':
+            return 'border-purple-200 bg-purple-50';
+          default:
+            return 'border-gray-200 bg-gray-50';
+        }
+      }
+      
+      // 筛选历史记录
+      filterHistory(filter) {
+        const historyItems = document.querySelectorAll('#history-list > div');
+        
+        // 更新筛选按钮样式
+        document.querySelectorAll('.history-filter').forEach(btn => {
+          if (btn.getAttribute('data-filter') === filter) {
+            btn.classList.remove('bg-gray-200', 'text-gray-700');
+            btn.classList.add('bg-primary', 'text-white');
+          } else {
+            btn.classList.remove('bg-primary', 'text-white');
+            btn.classList.add('bg-gray-200', 'text-gray-700');
+          }
+        });
+        
+        // 筛选历史记录
+        historyItems.forEach(item => {
+          if (filter === 'all' || item.getAttribute('data-type') === filter) {
+            item.classList.remove('hidden');
+          } else {
+            item.classList.add('hidden');
+          }
+        });
+      }
+    }
+
+    // 初始化应用
+    document.addEventListener('DOMContentLoaded', () => {
+      const dataManager = new DataManager();
+      const uiController = new UIController(dataManager);
+    });
+  </script>
+
+            <!-- 页脚 -->
+            <footer class="bg-gray-800 text-white py-4">
+                <div class="container mx-auto px-4 text-center">
+                    <p>&copy; 2024 围棋学习激励系统 - 让学习更有趣</p>
+                    <div class="mt-2">
+                        <a href="deploy.html" class="text-blue-300 hover:text-blue-200 transition-colors">
+                            <i class="fa fa-question-circle mr-1"></i> 部署指南
+                        </a>
+                    </div>
+                </div>
+            </footer>
+</body>
+</html>

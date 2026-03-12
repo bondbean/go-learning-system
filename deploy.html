@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>围棋学习激励系统 - 部署指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#7c3aed',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6',
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .scale-hover:hover {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-primary mb-2">围棋学习激励系统</h1>
+            <p class="text-gray-600">部署与使用指南</p>
+        </div>
+
+        <!-- 导航 -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button class="deploy-nav px-4 py-2 rounded-lg bg-primary text-white" data-target="method1">
+                    <i class="fa fa-file-text-o mr-2"></i>直接使用HTML
+                </button>
+                <button class="deploy-nav px-4 py-2 rounded-lg bg-gray-200 text-gray-700" data-target="method2">
+                    <i class="fa fa-server mr-2"></i>本地服务器
+                </button>
+                <button class="deploy-nav px-4 py-2 rounded-lg bg-gray-200 text-gray-700" data-target="method3">
+                    <i class="fa fa-wifi mr-2"></i>局域网分享
+                </button>
+                <button class="deploy-nav px-4 py-2 rounded-lg bg-gray-200 text-gray-700" data-target="method4">
+                    <i class="fa fa-cloud mr-2"></i>云服务部署
+                </button>
+                <button class="deploy-nav px-4 py-2 rounded-lg bg-gray-200 text-gray-700" data-target="faq">
+                    <i class="fa fa-question-circle mr-2"></i>常见问题
+                </button>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="space-y-6">
+            <!-- 方法一：直接使用HTML -->
+            <div id="method1" class="deploy-section bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-primary mb-4">
+                    <i class="fa fa-file-text-o mr-2"></i>方法一：直接使用HTML文件（最简单）
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                        <h3 class="font-semibold text-primary">优点</h3>
+                        <ul class="list-disc list-inside text-gray-700 mt-2">
+                            <li>无需安装任何软件</li>
+                            <li>操作简单，适合电脑新手</li>
+                            <li>可离线使用</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                            <div>
+                                <p class="font-medium">复制文件</p>
+                                <p class="text-gray-600">将 <code class="bg-gray-100 px-2 py-1 rounded">index.html</code> 文件复制到U盘或通过邮件发送给其他电脑。也可以将整个 <code class="bg-gray-100 px-2 py-1 rounded">go_learning_system</code> 文件夹复制过去。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                            <div>
+                                <p class="font-medium">打开使用</p>
+                                <p class="text-gray-600">在目标电脑上，直接双击 <code class="bg-gray-100 px-2 py-1 rounded">index.html</code> 文件，系统会自动用默认浏览器打开网站。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法二：本地服务器 -->
+            <div id="method2" class="deploy-section bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-2xl font-bold text-primary mb-4">
+                    <i class="fa fa-server mr-2"></i>方法二：本地服务器部署（推荐）
+                </h2>
+                <p class="text-gray-600 mb-4">使用本地服务器可以获得更好的体验，特别是在处理本地存储数据时。</p>
+                
+                <div class="space-y-6">
+                    <!-- Python服务器 -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-xl font-semibold text-primary mb-3">
+                            <i class="fa fa-python mr-2"></i>使用Python内置服务器（推荐）
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                                <div>
+                                    <p class="font-medium">确保目标电脑已安装Python</p>
+                                    <p class="text-gray-600">- Windows：从官网下载安装 Python 3.6+<br>- Mac/Linux：系统通常已预装Python</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                                <div>
+                                    <p class="font-medium">启动本地服务器</p>
+                                    <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mt-2">
+                                        <p># Python 3</p>
+                                        <p>python -m http.server 8000</p>
+                                        <p><br># 或 Python 2</p>
+                                        <p>python -m SimpleHTTPServer 8000</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">3</div>
+                                <div>
+                                    <p class="font-medium">访问网站</p>
+                                    <p class="text-gray-600">打开浏览器，访问 <a href="http://localhost:8000" class="text-primary underline hover:underline decoration-dotted">http://localhost:8000</a> 或 <a href="http://127.0.0.1:8000" class="text-primary underline hover:underline decoration-dotted">http://127.0.0.1:8000</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Node.js服务器 -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-xl font-semibold text-primary mb-3">
+                            <i class="fa fa-nodejs mr-2"></i>使用Node.js的http-server
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                                <div>
+                                    <p class="font-medium">安装Node.js和npm</p>
+                                    <p class="text-gray-600">从官网下载并安装 Node.js</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                                <div>
+                                    <p class="font-medium">安装http-server</p>
+                                    <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mt-2">
+                                        <p>npm install -g http-server</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">3</div>
+                                <div>
+                                    <p class="font-medium">启动服务器</p>
+                                    <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mt-2">
+                                        <p>cd go_learning_system</p>
+                                        <p>http-server -p 8000</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法三：局域网分享 -->
+            <div id="method3" class="deploy-section bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-2xl font-bold text-primary mb-4">
+                    <i class="fa fa-wifi mr-2"></i>方法三：局域网分享
+                </h2>
+                <p class="text-gray-600 mb-4">如果您想在同一网络下的多台电脑上使用：</p>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                        <div>
+                            <p class="font-medium">获取本机IP地址</p>
+                            <div class="bg-gray-100 p-3 rounded mt-2">
+                                <p class="font-medium">Windows：</p>
+                                <p class="text-gray-600">在命令提示符中运行 <code class="bg-gray-200 px-2 py-1 rounded">ipconfig</code></p>
+                                <p class="font-medium mt-2">Mac/Linux：</p>
+                                <p class="text-gray-600">在终端中运行 <code class="bg-gray-200 px-2 py-1 rounded">ifconfig</code> 或 <code class="bg-gray-200 px-2 py-1 rounded">ip addr</code></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                        <div>
+                            <p class="font-medium">启动本地服务器</p>
+                            <p class="text-gray-600">参考方法二，启动本地服务器</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">3</div>
+                        <div>
+                            <p class="font-medium">其他电脑访问</p>
+                            <p class="text-gray-600">在同一网络的其他电脑上，打开浏览器，访问 <code class="bg-gray-200 px-2 py-1 rounded">http://您的IP地址:8000</code></p>
+                            <p class="text-gray-600 mt-1">例如：<code class="bg-gray-200 px-2 py-1 rounded">http://192.168.1.100:8000</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法四：云服务部署 -->
+            <div id="method4" class="deploy-section bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-2xl font-bold text-primary mb-4">
+                    <i class="fa fa-cloud mr-2"></i>方法四：云服务部署（永久在线）
+                </h2>
+                <p class="text-gray-600 mb-4">如果您想让系统永久在线，可以部署到云服务：</p>
+                
+                <div class="space-y-6">
+                    <!-- GitHub Pages -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-xl font-semibold text-primary mb-3">
+                            <i class="fa fa-github mr-2"></i>GitHub Pages（免费）
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                                <div>
+                                    <p class="font-medium">创建GitHub账号</p>
+                                    <p class="text-gray-600">访问 GitHub官网 注册账号</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                                <div>
+                                    <p class="font-medium">创建新仓库</p>
+                                    <p class="text-gray-600">点击 "New repository"，仓库名建议使用 <code class="bg-gray-100 px-2 py-1 rounded">go-learning-system</code></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">3</div>
+                                <div>
+                                    <p class="font-medium">上传文件</p>
+                                    <p class="text-gray-600">可以使用Git命令行或GitHub Desktop上传文件，也可以直接在GitHub网页上上传文件</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">4</div>
+                                <div>
+                                    <p class="font-medium">启用GitHub Pages</p>
+                                    <p class="text-gray-600">进入仓库设置，找到 "GitHub Pages" 部分，选择 "main" 分支，点击 "Save"</p>
+                                    <p class="text-gray-600 mt-1">几分钟后，系统会提供一个URL供您访问</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Netlify -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-xl font-semibold text-primary mb-3">
+                            <i class="fa fa-rocket mr-2"></i>Netlify（免费）
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">1</div>
+                                <div>
+                                    <p class="font-medium">创建Netlify账号</p>
+                                    <p class="text-gray-600">访问 Netlify官网 注册账号</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">2</div>
+                                <div>
+                                    <p class="font-medium">拖拽部署</p>
+                                    <p class="text-gray-600">登录后，直接拖拽 <code class="bg-gray-100 px-2 py-1 rounded">go_learning_system</code> 文件夹到Netlify界面</p>
+                                    <p class="text-gray-600 mt-1">系统会自动部署并提供一个URL</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 常见问题 -->
+            <div id="faq" class="deploy-section bg-white rounded-lg shadow-md p-6 hidden">
+                <h2 class="text-2xl font-bold text-primary mb-4">
+                    <i class="fa fa-question-circle mr-2"></i>常见问题
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="font-semibold text-primary">为什么数据在不同浏览器间不共享？</h3>
+                        <p class="text-gray-600 mt-2">localStorage是按浏览器存储的，换浏览器或清除缓存会导致数据丢失。</p>
+                    </div>
+                    
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="font-semibold text-primary">如何备份我的数据？</h3>
+                        <p class="text-gray-600 mt-2">在浏览器控制台（F12 > Console）中运行：</p>
+                        <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mt-2">
+                            <p>localStorage.getItem('goLearningSystem')</p>
+                        </div>
+                        <p class="text-gray-600 mt-2">然后复制输出的字符串进行备份。</p>
+                    </div>
+                    
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="font-semibold text-primary">如何恢复备份的数据？</h3>
+                        <p class="text-gray-600 mt-2">在浏览器控制台中运行：</p>
+                        <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm mt-2">
+                            <p>localStorage.setItem('goLearningSystem', '备份的字符串')</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="font-semibold text-primary">网站无法访问怎么办？</h3>
+                        <p class="text-gray-600 mt-2">检查本地服务器是否在运行，端口是否正确，防火墙是否阻止了访问。</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold text-primary">登录信息</h3>
+                        <p class="text-gray-600 mt-2">系统默认登录凭证：</p>
+                        <div class="bg-gray-50 p-3 rounded mt-2">
+                            <p><strong>用户名：</strong>nlxq</p>
+                            <p><strong>密码：</strong>6688</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 返回首页按钮 -->
+        <div class="text-center mt-8">
+            <a href="index.html" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-all-300">
+                <i class="fa fa-arrow-left mr-2"></i> 返回系统首页
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 导航切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const navButtons = document.querySelectorAll('.deploy-nav');
+            const sections = document.querySelectorAll('.deploy-section');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.dataset.target;
+                    
+                    // 更新导航按钮样式
+                    navButtons.forEach(btn => {
+                        btn.classList.remove('bg-primary', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('bg-primary', 'text-white');
+                    
+                    // 显示对应的内容区域
+                    sections.forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    document.getElementById(target).classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
